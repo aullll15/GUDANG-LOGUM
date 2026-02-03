@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Form Pengambilan Barang</title>
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+    max-width: 900px;
+    margin: auto;
+  }
+  h2 { text-align: center; }
+  label { font-weight: bold; }
+  input, select, button {
+    padding: 6px;
+    margin-top: 4px;
+    width: 100%;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+  th, td {
+    border: 1px solid #ccc;
+    padding: 6px;
+    text-align: center;
+  }
+  button {
+    cursor: pointer;
+  }
+  .btn {
+    width: auto;
+    padding: 6px 12px;
+  }
+</style>
+</head>
+
+<body>
+
+<h2>FORM PENGAMBILAN / PEMASUKAN BARANG</h2>
+
+<label>Unit</label>
+<select id="unit" required></select>
+
+<br><br>
+
+<label>Nama Pengambil</label>
+<input id="nama" required>
+
+<br><br>
+
+<label>Tanggal</label>
+<input type="date" id="tanggal" required>
+
+<br><br>
+
+<label>Jenis Transaksi</label>
+<select id="jenis">
+  <option value="Barang Keluar">Barang Keluar</option>
+  <option value="Barang Masuk">Barang Masuk</option>
+</select>
+
+<hr>
+
+<h3>Daftar Item</h3>
+
+<table id="itemsTable">
+  <tr>
+    <th>Nama Item</th>
+    <th>Qty</th>
+    <th>Aksi</th>
+  </tr>
+</table>
+
+<br>
+
+<button class="btn" onclick="tambahItem()">+ Tambah Item</button>
+
+<br><br>
+
+<button class="btn" onclick="kirim()">KIRIM</button>
+
+<datalist id="itemList"></datalist>
+
+<script>
+/* =============================
+   GANTI URL INI SAJA
+============================= */
+const API_URL = "https://script.google.com/macros/s/AKfycbwnRdI18Zh-ZtU1HDUe4prjRkOATiMsYRG4gazsQ7STVPBhg44Gehd6fw_FgxN61oYf/exec";
+
+/* =============================
+   LOAD DATA UNIT & ITEM
+============================= */
+fetch(API_URL)
+  .then(r => r.json())
+  .then(d => {
+    d.units.forEach(u => {
+      const o = document.createElement("option");
+      o.value = o.textContent = u;
+      unit.appendChild(o);
+    });
+
+    d.items.forEach(i => {
+      const o = document.createElement("option");
+      o.value = i;
+      itemList.appendChild(o);
+    });
+
+    tambahItem();
+  });
+
+/* =============================
+   TAMBAH BARIS ITEM
+============================= */
+function tambahItem() {
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td><input list="itemList" class="item"></td>
+    <td><input type="number" min="1" class="qty"></td>
+    <td><button class="btn" onclick="this.closest('tr').remove()">Hapus</button></td>
+  `;
+  document.getElementById("itemsTable").appendChild(tr);
+}
+
+/* =============================
+   KIRIM DATA
+============================= */
+function kirim() {
+  const items = [];
+
+  document.querySelectorAll("#itemsTable tr").forEach((row, i) => {
+    if (i === 0) return;
+    const item = row.querySelector(".item").value;
+    const qty  = row.querySelector(".qty").value;
+
+    if (item && qty) {
+      items.push({ nama: item, qty: Number(qty) });
+    }
+  });
+
+  if (items.length === 0) {
+    alert("Minimal 1 item diisi");
+    return;
+  }
+
+  fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      unit: unit.value,
+      nama: nama.value,
+      tanggal: tanggal.value,
+      jenis: jenis.value,
+      items: items
+    })
+  })
+  .then(r => r.text())
+  .then(res => alert(res))
+  .catch(err => alert("ERROR: " + err.message));
+}
+</script>
+
+</body>
+</html>
