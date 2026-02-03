@@ -2,154 +2,163 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Barang Keluar</title>
+<title>Form Pengambilan Barang</title>
 
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background: #f2f2f2;
-}
-
-.container {
-  max-width: 420px;
-  margin: 40px auto;
-  background: #fff;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
-}
-
-h3 {
-  text-align: center;
-}
-
-label {
-  font-size: 14px;
-  display: block;
-  margin-top: 10px;
-}
-
-input, select, button {
-  width: 100%;
-  padding: 8px;
-  margin-top: 4px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-}
-
-.item-row {
-  display: flex;
-  gap: 6px;
-  margin-top: 6px;
-}
-
-.item-row input {
-  flex: 1;
-}
-
-button {
-  background: #007bff;
-  color: white;
-  border: none;
-  cursor: pointer;
-}
-
-button:hover {
-  background: #0056b3;
-}
-
-.add-btn {
-  background: #28a745;
-  margin-top: 10px;
-}
-
-.add-btn:hover {
-  background: #1e7e34;
-}
+  body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+    max-width: 900px;
+    margin: auto;
+  }
+  h2 { text-align: center; }
+  label { font-weight: bold; }
+  input, select, button {
+    padding: 6px;
+    margin-top: 4px;
+    width: 100%;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+  th, td {
+    border: 1px solid #ccc;
+    padding: 6px;
+    text-align: center;
+  }
+  button {
+    cursor: pointer;
+  }
+  .btn {
+    width: auto;
+    padding: 6px 12px;
+  }
 </style>
 </head>
 
 <body>
 
-<div class="container">
-<h3>Barang Keluar</h3>
-
-<label>Email</label>
-<input id="email" placeholder="email@contoh.com">
+<h2>FORM PENGAMBILAN / PEMASUKAN BARANG</h2>
 
 <label>Unit</label>
-<select id="unit"></select>
+<select id="unit" required></select>
+
+<br><br>
 
 <label>Nama Pengambil</label>
-<input id="nama">
+<input id="nama" required>
+
+<br><br>
 
 <label>Tanggal</label>
-<input type="date" id="tanggal">
+<input type="date" id="tanggal" required>
 
-<label>Item</label>
-<div id="items"></div>
-
-<button class="add-btn" onclick="tambahItem()">+ Tambah Item</button>
 <br><br>
-<button onclick="kirim()">Kirim</button>
-</div>
+
+<label>Jenis Transaksi</label>
+<select id="jenis">
+  <option value="Barang Keluar">Barang Keluar</option>
+  <option value="Barang Masuk">Barang Masuk</option>
+</select>
+
+<hr>
+
+<h3>Daftar Item</h3>
+
+<table id="itemsTable">
+  <tr>
+    <th>Nama Item</th>
+    <th>Qty</th>
+    <th>Aksi</th>
+  </tr>
+</table>
+
+<br>
+
+<button class="btn" onclick="tambahItem()">+ Tambah Item</button>
+
+<br><br>
+
+<button class="btn" onclick="kirim()">KIRIM</button>
 
 <datalist id="itemList"></datalist>
 
 <script>
-const API_URL = "PASTE_API_URL_KAMU_DI_SINI";
+/* =============================
+   GANTI URL INI SAJA
+============================= */
+const API_URL = "PASTE_URL_WEB_APP_KAMU_DI_SINI";
 
-let itemCount = 0;
-
+/* =============================
+   LOAD DATA UNIT & ITEM
+============================= */
 fetch(API_URL)
-.then(r => r.json())
-.then(d => {
-  d.units.forEach(u => {
-    unit.innerHTML += `<option>${u}</option>`;
+  .then(r => r.json())
+  .then(d => {
+    d.units.forEach(u => {
+      const o = document.createElement("option");
+      o.value = o.textContent = u;
+      unit.appendChild(o);
+    });
+
+    d.items.forEach(i => {
+      const o = document.createElement("option");
+      o.value = i;
+      itemList.appendChild(o);
+    });
+
+    tambahItem();
   });
 
-  d.items.forEach(i => {
-    itemList.innerHTML += `<option value="${i}">`;
-  });
-
-  tambahItem();
-});
-
+/* =============================
+   TAMBAH BARIS ITEM
+============================= */
 function tambahItem() {
-  itemCount++;
-  const div = document.createElement("div");
-  div.className = "item-row";
-  div.innerHTML = `
-    <input list="itemList" id="item${itemCount}" placeholder="Nama item">
-    <input type="number" id="qty${itemCount}" placeholder="Qty" min="1">
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td><input list="itemList" class="item"></td>
+    <td><input type="number" min="1" class="qty"></td>
+    <td><button class="btn" onclick="this.closest('tr').remove()">Hapus</button></td>
   `;
-  items.appendChild(div);
+  document.getElementById("itemsTable").appendChild(tr);
 }
 
+/* =============================
+   KIRIM DATA
+============================= */
 function kirim() {
-  const dataItem = [];
-  for (let i = 1; i <= itemCount; i++) {
-    const nama = document.getElementById(`item${i}`).value;
-    const qty  = document.getElementById(`qty${i}`).value;
-    if (nama && qty) {
-      dataItem.push({ nama, qty });
+  const items = [];
+
+  document.querySelectorAll("#itemsTable tr").forEach((row, i) => {
+    if (i === 0) return;
+    const item = row.querySelector(".item").value;
+    const qty  = row.querySelector(".qty").value;
+
+    if (item && qty) {
+      items.push({ nama: item, qty: Number(qty) });
     }
+  });
+
+  if (items.length === 0) {
+    alert("Minimal 1 item diisi");
+    return;
   }
 
   fetch(API_URL, {
     method: "POST",
     body: JSON.stringify({
-      email: email.value,
       unit: unit.value,
       nama: nama.value,
       tanggal: tanggal.value,
-      jenis: "Barang Keluar",
-      items: dataItem
+      jenis: jenis.value,
+      items: items
     })
   })
   .then(r => r.text())
-  .then(alert);
+  .then(res => alert(res))
+  .catch(err => alert("ERROR: " + err.message));
 }
 </script>
 
