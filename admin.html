@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width">
+<title>Barang Masuk</title>
+</head>
+<body>
+
+<h3>Barang Masuk</h3>
+
+<input id="email" placeholder="Email"><br>
+<select id="unit"></select><br>
+<input id="nama" placeholder="Nama"><br>
+<input type="date" id="tanggal"><br><br>
+
+<div id="items"></div>
+<button onclick="tambahItem()">+ Tambah Item</button><br><br>
+
+<button onclick="kirim()">Kirim</button>
+
+<datalist id="itemList"></datalist>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbyKCPc3wXtmWGlRqCJs8uqsNAvxECs3JG0EATuudykA3WnPpvkK9fuSwUTFb3J9bn-h/exec";
+
+let itemCount = 0;
+let allItems = [];
+
+fetch(API_URL).then(r=>r.json()).then(d=>{
+  allItems = d.items;
+  d.units.forEach(u=>{
+    unit.innerHTML += `<option>${u}</option>`;
+  });
+  allItems.forEach(i=>{
+    itemList.innerHTML += `<option value="${i}">`;
+  });
+  tambahItem();
+});
+
+function tambahItem(){
+  itemCount++;
+  items.innerHTML += `
+    <div>
+      <input list="itemList" id="item${itemCount}" placeholder="Item">
+      <input type="number" id="qty${itemCount}" min="1" placeholder="Qty">
+    </div>`;
+}
+
+function kirim(){
+  const list = [];
+  for(let i=1;i<=itemCount;i++){
+    const n = document.getElementById(`item${i}`).value;
+    const q = document.getElementById(`qty${i}`).value;
+    if(n && q) list.push({nama:n, qty:q});
+  }
+
+  fetch(API_URL,{
+    method:"POST",
+    body:JSON.stringify({
+      email:email.value,
+      unit:unit.value,
+      nama:nama.value,
+      tanggal:tanggal.value,
+      jenis:"Barang Masuk",
+      items:list
+    })
+  }).then(r=>r.text()).then(alert);
+}
+</script>
+</body>
+</html>
