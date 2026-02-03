@@ -1,118 +1,71 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Form Pengambilan Barang</title>
-
-<style>
-body {
-  font-family: Arial, sans-serif;
-  max-width: 500px;
-  margin: auto;
-  padding: 15px;
-}
-label {
-  font-weight: bold;
-}
-input, select, button {
-  width: 100%;
-  padding: 8px;
-  margin-top: 5px;
-  margin-bottom: 15px;
-}
-button {
-  background: #0d6efd;
-  color: white;
-  border: none;
-  border-radius: 4px;
-}
-button:active {
-  background: #084298;
-}
-</style>
+<meta name="viewport" content="width=device-width">
+<title>Barang Keluar</title>
 </head>
-
 <body>
 
-<h3>Form Pengambilan Barang</h3>
+<h3>Barang Keluar</h3>
 
-<label>Email</label>
-<input type="email" id="email" placeholder="email@contoh.com" required>
+<input id="email" placeholder="Email"><br>
+<select id="unit"></select><br>
+<input id="nama" placeholder="Nama"><br>
+<input type="date" id="tanggal"><br><br>
 
-<label>Unit</label>
-<select id="unit" required></select>
-
-<label>Nama Pengambil</label>
-<input type="text" id="nama" required>
-
-<label>Tanggal</label>
-<input type="date" id="tanggal" required>
-
-<label>Nama Item</label>
-<input list="itemList" id="item" placeholder="Cari nama item..." required>
-<datalist id="itemList"></datalist>
-
-<label>Jumlah</label>
-<input type="number" id="qty" min="1" required>
+<div id="items"></div>
+<button onclick="tambahItem()">+ Tambah Item</button><br><br>
 
 <button onclick="kirim()">Kirim</button>
 
+<datalist id="itemList"></datalist>
+
 <script>
-const API_URL = "PASTE_API_URL_KAMU_DI_SINI";
+const API_URL = "PASTE_API_URL";
 
-/* LOAD DATA */
-fetch(API_URL)
-  .then(res => res.json())
-  .then(data => {
+let itemCount = 0;
+let allItems = [];
 
-    // UNIT
-    data.units.forEach(u => {
-      const opt = document.createElement("option");
-      opt.value = u;
-      opt.textContent = u;
-      unit.appendChild(opt);
-    });
-
-    // ITEM
-    data.items.forEach(i => {
-      const opt = document.createElement("option");
-      opt.value = i;
-      itemList.appendChild(opt);
-    });
+fetch(API_URL).then(r=>r.json()).then(d=>{
+  allItems = d.items;
+  d.units.forEach(u=>{
+    unit.innerHTML += `<option>${u}</option>`;
   });
+  allItems.forEach(i=>{
+    itemList.innerHTML += `<option value="${i}">`;
+  });
+  tambahItem();
+});
 
-function kirim() {
+function tambahItem(){
+  itemCount++;
+  items.innerHTML += `
+    <div>
+      <input list="itemList" id="item${itemCount}" placeholder="Item">
+      <input type="number" id="qty${itemCount}" min="1" placeholder="Qty">
+    </div>`;
+}
 
-  if (!email.value || !unit.value || !nama.value || !item.value || !qty.value) {
-    alert("Lengkapi semua data");
-    return;
+function kirim(){
+  const list = [];
+  for(let i=1;i<=itemCount;i++){
+    const n = document.getElementById(`item${i}`).value;
+    const q = document.getElementById(`qty${i}`).value;
+    if(n && q) list.push({nama:n, qty:q});
   }
 
-  fetch(API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email: email.value,
-      unit: unit.value,
-      nama: nama.value,
-      tanggal: tanggal.value,
-      jenis: "Barang Keluar",
-      items: [
-        { nama: item.value, qty: qty.value }
-      ]
+  fetch(API_URL,{
+    method:"POST",
+    body:JSON.stringify({
+      email:email.value,
+      unit:unit.value,
+      nama:nama.value,
+      tanggal:tanggal.value,
+      jenis:"Barang Keluar",
+      items:list
     })
-  })
-  .then(res => res.text())
-  .then(msg => {
-    alert(msg);
-    if (msg === "SUCCESS") {
-      item.value = "";
-      qty.value = "";
-    }
-  });
+  }).then(r=>r.text()).then(alert);
 }
 </script>
-
 </body>
 </html>
