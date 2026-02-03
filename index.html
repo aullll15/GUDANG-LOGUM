@@ -1,71 +1,157 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-<meta name="viewport" content="width=device-width">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Barang Keluar</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f2f2f2;
+}
+
+.container {
+  max-width: 420px;
+  margin: 40px auto;
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+h3 {
+  text-align: center;
+}
+
+label {
+  font-size: 14px;
+  display: block;
+  margin-top: 10px;
+}
+
+input, select, button {
+  width: 100%;
+  padding: 8px;
+  margin-top: 4px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.item-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.item-row input {
+  flex: 1;
+}
+
+button {
+  background: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #0056b3;
+}
+
+.add-btn {
+  background: #28a745;
+  margin-top: 10px;
+}
+
+.add-btn:hover {
+  background: #1e7e34;
+}
+</style>
 </head>
+
 <body>
 
+<div class="container">
 <h3>Barang Keluar</h3>
 
-<input id="email" placeholder="Email"><br>
-<select id="unit"></select><br>
-<input id="nama" placeholder="Nama"><br>
-<input type="date" id="tanggal"><br><br>
+<label>Email</label>
+<input id="email" placeholder="email@contoh.com">
 
+<label>Unit</label>
+<select id="unit"></select>
+
+<label>Nama Pengambil</label>
+<input id="nama">
+
+<label>Tanggal</label>
+<input type="date" id="tanggal">
+
+<label>Item</label>
 <div id="items"></div>
-<button onclick="tambahItem()">+ Tambah Item</button><br><br>
 
+<button class="add-btn" onclick="tambahItem()">+ Tambah Item</button>
+<br><br>
 <button onclick="kirim()">Kirim</button>
+</div>
 
 <datalist id="itemList"></datalist>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbyKCPc3wXtmWGlRqCJs8uqsNAvxECs3JG0EATuudykA3WnPpvkK9fuSwUTFb3J9bn-h/exec";
+const API_URL = "PASTE_API_URL_KAMU_DI_SINI";
 
 let itemCount = 0;
-let allItems = [];
 
-fetch(API_URL).then(r=>r.json()).then(d=>{
-  allItems = d.items;
-  d.units.forEach(u=>{
+fetch(API_URL)
+.then(r => r.json())
+.then(d => {
+  d.units.forEach(u => {
     unit.innerHTML += `<option>${u}</option>`;
   });
-  allItems.forEach(i=>{
+
+  d.items.forEach(i => {
     itemList.innerHTML += `<option value="${i}">`;
   });
+
   tambahItem();
 });
 
-function tambahItem(){
+function tambahItem() {
   itemCount++;
-  items.innerHTML += `
-    <div>
-      <input list="itemList" id="item${itemCount}" placeholder="Item">
-      <input type="number" id="qty${itemCount}" min="1" placeholder="Qty">
-    </div>`;
+  const div = document.createElement("div");
+  div.className = "item-row";
+  div.innerHTML = `
+    <input list="itemList" id="item${itemCount}" placeholder="Nama item">
+    <input type="number" id="qty${itemCount}" placeholder="Qty" min="1">
+  `;
+  items.appendChild(div);
 }
 
-function kirim(){
-  const list = [];
-  for(let i=1;i<=itemCount;i++){
-    const n = document.getElementById(`item${i}`).value;
-    const q = document.getElementById(`qty${i}`).value;
-    if(n && q) list.push({nama:n, qty:q});
+function kirim() {
+  const dataItem = [];
+  for (let i = 1; i <= itemCount; i++) {
+    const nama = document.getElementById(`item${i}`).value;
+    const qty  = document.getElementById(`qty${i}`).value;
+    if (nama && qty) {
+      dataItem.push({ nama, qty });
+    }
   }
 
-  fetch(API_URL,{
-    method:"POST",
-    body:JSON.stringify({
-      email:email.value,
-      unit:unit.value,
-      nama:nama.value,
-      tanggal:tanggal.value,
-      jenis:"Barang Keluar",
-      items:list
+  fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      email: email.value,
+      unit: unit.value,
+      nama: nama.value,
+      tanggal: tanggal.value,
+      jenis: "Barang Keluar",
+      items: dataItem
     })
-  }).then(r=>r.text()).then(alert);
+  })
+  .then(r => r.text())
+  .then(alert);
 }
 </script>
+
 </body>
 </html>
