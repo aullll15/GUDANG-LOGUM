@@ -1,0 +1,16 @@
+<h3>Dashboard Stok</h3>
+<table border="1" id="t"></table>
+
+<script>
+fetch("API_URL").then(r=>r.json()).then(d=>{
+  d.items.forEach((i,idx)=>{
+    const s = d.stok[idx];
+    t.innerHTML += `
+      <tr>
+        <td>${i}</td>
+        <td>${s}</td>
+        <td>${s<10?"🔴":s<30?"🟡":"🟢"}</td>
+      </tr>`;
+  });
+});
+</script>
