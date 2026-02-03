@@ -2,163 +2,115 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Form Pengambilan Barang</title>
 
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    padding: 20px;
-    max-width: 900px;
-    margin: auto;
-  }
-  h2 { text-align: center; }
-  label { font-weight: bold; }
-  input, select, button {
-    padding: 6px;
-    margin-top: 4px;
-    width: 100%;
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-  }
-  th, td {
-    border: 1px solid #ccc;
-    padding: 6px;
-    text-align: center;
-  }
-  button {
-    cursor: pointer;
-  }
-  .btn {
-    width: auto;
-    padding: 6px 12px;
-  }
+body {
+  font-family: Arial, sans-serif;
+  max-width: 500px;
+  margin: auto;
+  padding: 15px;
+}
+label {
+  font-weight: bold;
+}
+input, select, button {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+  margin-bottom: 15px;
+}
+button {
+  background: #0d6efd;
+  color: white;
+  border: none;
+  border-radius: 4px;
+}
+button:active {
+  background: #084298;
+}
 </style>
 </head>
 
 <body>
 
-<h2>FORM PENGAMBILAN / PEMASUKAN BARANG</h2>
+<h3>Form Pengambilan Barang</h3>
+
+<label>Email</label>
+<input type="email" id="email" placeholder="email@contoh.com" required>
 
 <label>Unit</label>
 <select id="unit" required></select>
 
-<br><br>
-
 <label>Nama Pengambil</label>
-<input id="nama" required>
-
-<br><br>
+<input type="text" id="nama" required>
 
 <label>Tanggal</label>
 <input type="date" id="tanggal" required>
 
-<br><br>
-
-<label>Jenis Transaksi</label>
-<select id="jenis">
-  <option value="Barang Keluar">Barang Keluar</option>
-  <option value="Barang Masuk">Barang Masuk</option>
-</select>
-
-<hr>
-
-<h3>Daftar Item</h3>
-
-<table id="itemsTable">
-  <tr>
-    <th>Nama Item</th>
-    <th>Qty</th>
-    <th>Aksi</th>
-  </tr>
-</table>
-
-<br>
-
-<button class="btn" onclick="tambahItem()">+ Tambah Item</button>
-
-<br><br>
-
-<button class="btn" onclick="kirim()">KIRIM</button>
-
+<label>Nama Item</label>
+<input list="itemList" id="item" placeholder="Cari nama item..." required>
 <datalist id="itemList"></datalist>
 
+<label>Jumlah</label>
+<input type="number" id="qty" min="1" required>
+
+<button onclick="kirim()">Kirim</button>
+
 <script>
-/* =============================
-   GANTI URL INI SAJA
-============================= */
-const API_URL = "https://script.google.com/macros/s/AKfycbwnRdI18Zh-ZtU1HDUe4prjRkOATiMsYRG4gazsQ7STVPBhg44Gehd6fw_FgxN61oYf/exec";
+const API_URL = "PASTE_API_URL_KAMU_DI_SINI";
 
-/* =============================
-   LOAD DATA UNIT & ITEM
-============================= */
+/* LOAD DATA */
 fetch(API_URL)
-  .then(r => r.json())
-  .then(d => {
-    d.units.forEach(u => {
-      const o = document.createElement("option");
-      o.value = o.textContent = u;
-      unit.appendChild(o);
+  .then(res => res.json())
+  .then(data => {
+
+    // UNIT
+    data.units.forEach(u => {
+      const opt = document.createElement("option");
+      opt.value = u;
+      opt.textContent = u;
+      unit.appendChild(opt);
     });
 
-    d.items.forEach(i => {
-      const o = document.createElement("option");
-      o.value = i;
-      itemList.appendChild(o);
+    // ITEM
+    data.items.forEach(i => {
+      const opt = document.createElement("option");
+      opt.value = i;
+      itemList.appendChild(opt);
     });
-
-    tambahItem();
   });
 
-/* =============================
-   TAMBAH BARIS ITEM
-============================= */
-function tambahItem() {
-  const tr = document.createElement("tr");
-  tr.innerHTML = `
-    <td><input list="itemList" class="item"></td>
-    <td><input type="number" min="1" class="qty"></td>
-    <td><button class="btn" onclick="this.closest('tr').remove()">Hapus</button></td>
-  `;
-  document.getElementById("itemsTable").appendChild(tr);
-}
-
-/* =============================
-   KIRIM DATA
-============================= */
 function kirim() {
-  const items = [];
 
-  document.querySelectorAll("#itemsTable tr").forEach((row, i) => {
-    if (i === 0) return;
-    const item = row.querySelector(".item").value;
-    const qty  = row.querySelector(".qty").value;
-
-    if (item && qty) {
-      items.push({ nama: item, qty: Number(qty) });
-    }
-  });
-
-  if (items.length === 0) {
-    alert("Minimal 1 item diisi");
+  if (!email.value || !unit.value || !nama.value || !item.value || !qty.value) {
+    alert("Lengkapi semua data");
     return;
   }
 
   fetch(API_URL, {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
+      email: email.value,
       unit: unit.value,
       nama: nama.value,
       tanggal: tanggal.value,
-      jenis: jenis.value,
-      items: items
+      jenis: "Barang Keluar",
+      items: [
+        { nama: item.value, qty: qty.value }
+      ]
     })
   })
-  .then(r => r.text())
-  .then(res => alert(res))
-  .catch(err => alert("ERROR: " + err.message));
+  .then(res => res.text())
+  .then(msg => {
+    alert(msg);
+    if (msg === "SUCCESS") {
+      item.value = "";
+      qty.value = "";
+    }
+  });
 }
 </script>
 
