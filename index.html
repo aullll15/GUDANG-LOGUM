@@ -2,165 +2,147 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Form Pengambilan Barang</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Form Stok Barang</title>
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    padding: 20px;
-    max-width: 900px;
-    margin: auto;
-  }
-  h2 { text-align: center; }
-  label { font-weight: bold; }
-  input, select, button {
-    padding: 6px;
-    margin-top: 4px;
-    width: 100%;
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-  }
-  th, td {
-    border: 1px solid #ccc;
-    padding: 6px;
-    text-align: center;
-  }
-  button {
-    cursor: pointer;
-  }
-  .btn {
-    width: auto;
-    padding: 6px 12px;
-  }
+body{font-family:Arial,sans-serif;background:#f4f6f8;margin:0;padding:15px;}
+.container{max-width:900px;margin:auto;background:white;padding:25px;border-radius:12px;box-shadow:0 5px 20px rgba(0,0,0,0.1);}
+h2{text-align:center;color:#2c3e50;}
+label{display:block;margin-top:10px;font-weight:bold;}
+input,select{width:100%;padding:12px;margin-top:5px;margin-bottom:15px;border-radius:6px;border:1px solid #ccc;font-size:16px;}
+table{width:100%;border-collapse:collapse;margin-top:15px;}
+th,td{border:1px solid #ccc;padding:10px;text-align:center;}
+th{background:#2c3e50;color:white;}
+button{border:none;border-radius:6px;cursor:pointer;padding:12px;font-size:16px;color:white;transition:0.3s;}
+button:hover{opacity:0.9;}
+.btnTambah{background:#3498db;margin-top:5px;}
+.btnHapus{background:#e74c3c;}
+.btnKirim{background:#27ae60;width:100%;font-size:18px;margin-top:10px;}
+.btnKirim:disabled{background:gray;cursor:not-allowed;}
+.loading{text-align:center;margin-top:10px;display:none;font-weight:bold;color:#2980b9;}
+@media(max-width:700px){input,select,button{font-size:14px;padding:10px;}table{font-size:13px;}}
 </style>
 </head>
-
 <body>
-
-<h2>FORM PENGAMBILAN / PEMASUKAN BARANG</h2>
+<div class="container">
+<h2>Form Pengambilan / Pemasukan Barang</h2>
 
 <label>Unit</label>
-<select id="unit" required></select>
-
-<br><br>
+<select id="unit"></select>
 
 <label>Nama Pengambil</label>
-<input id="nama" required>
-
-<br><br>
+<input id="nama_pengambil" placeholder="Nama Pengambil">
 
 <label>Tanggal</label>
-<input type="date" id="tanggal" required>
-
-<br><br>
+<input type="date" id="tanggal">
 
 <label>Jenis Transaksi</label>
 <select id="jenis">
-  <option value="Barang Keluar">Barang Keluar</option>
-  <option value="Barang Masuk">Barang Masuk</option>
+<option value="MASUK">Barang Masuk</option>
+<option value="KELUAR">Barang Keluar</option>
 </select>
 
 <hr>
-
 <h3>Daftar Item</h3>
-
 <table id="itemsTable">
-  <tr>
-    <th>Nama Item</th>
-    <th>Qty</th>
-    <th>Aksi</th>
-  </tr>
+<tr><th>Nama Item</th><th>Qty</th><th>Aksi</th></tr>
 </table>
-
-<br>
-
-<button class="btn" onclick="tambahItem()">+ Tambah Item</button>
-
-<br><br>
-
-<button class="btn" onclick="kirim()">KIRIM</button>
+<button class="btnTambah" onclick="tambahItem()">+ Tambah Item</button>
+<button class="btnKirim" id="btnKirim" onclick="kirim()">KIRIM DATA</button>
+<div class="loading" id="loading">Mengirim data...</div>
+</div>
 
 <datalist id="itemList"></datalist>
 
 <script>
-/* =============================
-   GANTI URL INI SAJA
-============================= */
-const API_URL = "https://script.google.com/macros/s/AKfycbwPisb-l6jgzj-a7gF8itSr-buzCWHz0ULrXJMXiXpnLAEFT11KwCWEQ879touVnF7Q/exec";
+const API_URL="https://script.google.com/macros/s/AKfycbwcr2BZNsMNEJT2TaoDPqeoIZDspFlNVy64PJEyIbuji5NPC9nnbPmkkAXLofEoI7jU/exec"; // Ganti dengan URL Web App
+const unit=document.getElementById("unit");
+const nama=document.getElementById("nama_pengambil");
+const tanggal=document.getElementById("tanggal");
+const jenis=document.getElementById("jenis");
+const itemsTable=document.getElementById("itemsTable");
+const itemList=document.getElementById("itemList");
+const btnKirim=document.getElementById("btnKirim");
+const loading=document.getElementById("loading");
 
-/* =============================
-   LOAD DATA UNIT & ITEM
-============================= */
-fetch(API_URL)
-  .then(r => r.json())
-  .then(d => {
-    d.units.forEach(u => {
-      const o = document.createElement("option");
-      o.value = o.textContent = u;
-      unit.appendChild(o);
-    });
+let isSubmitting=false;
+tanggal.value=new Date().toISOString().split("T")[0];
 
-    d.items.forEach(i => {
-      const o = document.createElement("option");
-      o.value = i;
-      itemList.appendChild(o);
-    });
+// Load unit & item
+async function loadData(){
+  const unitRes=await fetch(API_URL+"?type=unit");
+  const units=await unitRes.json();
+  units.forEach(u=>{let o=document.createElement("option"); o.value=o.textContent=u; unit.appendChild(o);});
 
-    tambahItem();
-  });
+  const itemRes=await fetch(API_URL);
+  const items=await itemRes.json();
+  items.forEach(i=>{let o=document.createElement("option"); o.value=i.nama_item; itemList.appendChild(o);});
 
-/* =============================
-   TAMBAH BARIS ITEM
-============================= */
-function tambahItem() {
-  const tr = document.createElement("tr");
-  tr.innerHTML = `
-    <td><input list="itemList" class="item"></td>
-    <td><input type="number" min="1" class="qty"></td>
-    <td><button class="btn" onclick="this.closest('tr').remove()">Hapus</button></td>
-  `;
-  document.getElementById("itemsTable").appendChild(tr);
+  tambahItem();
+}
+loadData();
+
+// Tambah baris item
+function tambahItem(){
+  const tr=document.createElement("tr");
+  tr.innerHTML=`<td><input list="itemList" class="item" placeholder="Nama Item"></td>
+  <td><input type="number" min="1" class="qty" placeholder="Qty"></td>
+  <td><button class="btnHapus" onclick="hapus(this)">Hapus</button></td>`;
+  itemsTable.appendChild(tr);
 }
 
-/* =============================
-   KIRIM DATA
-============================= */
-function kirim() {
-  const items = [];
+// Hapus item
+function hapus(btn){btn.closest("tr").remove();}
 
-  document.querySelectorAll("#itemsTable tr").forEach((row, i) => {
-    if (i === 0) return;
-    const item = row.querySelector(".item").value;
-    const qty  = row.querySelector(".qty").value;
+// Kirim data
+function kirim(){
+  if(isSubmitting) return;
 
-    if (item && qty) {
-      items.push({ nama: item, qty: Number(qty) });
-    }
+  let items=[];
+  document.querySelectorAll("#itemsTable tr").forEach((row,i)=>{
+    if(i===0) return;
+    const item=row.querySelector(".item").value;
+    const qty=row.querySelector(".qty").value;
+    if(item && qty) items.push({nama_item:item, qty:Number(qty)});
   });
 
-  if (items.length === 0) {
-    alert("Minimal 1 item diisi");
-    return;
-  }
+  if(!unit.value){ alert("Pilih unit"); return;}
+  if(!nama.value){ alert("Isi nama pengambil"); return;}
+  if(items.length===0){ alert("Isi minimal 1 item"); return;}
+
+  isSubmitting=true;
+  btnKirim.disabled=true;
+  loading.style.display="block";
 
   fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify({
+  method: "POST",
+  body: new URLSearchParams({
+    data: JSON.stringify({
       unit: unit.value,
-      nama: nama.value,
+      nama_pengambil: nama.value,
       tanggal: tanggal.value,
       jenis: jenis.value,
       items: items
     })
   })
+  })
   .then(r => r.text())
-  .then(res => alert(res))
-  .catch(err => alert("ERROR: " + err.message));
+  .then(res => {
+    alert(res);
+    resetForm();
+  })
+  .catch(err => {
+    alert("ERROR: " + err.message);
+  });
+
+}
+
+// Reset form
+function resetForm(){
+  nama.value="";
+  itemsTable.innerHTML=`<tr><th>Nama Item</th><th>Qty</th><th>Aksi</th></tr>`;
+  tambahItem();
 }
 </script>
-
 </body>
 </html>
